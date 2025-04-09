@@ -32,12 +32,13 @@ Paper: http://arxiv.org/abs/2208.01066 <br><br>
 Also this repo is inteded setup on linux, your system may differ slightly.
 
 ### Vertex AI training run
+If someone (only 1 person on the team has to do this) already has set up the Vertex AI Infrastructure one simply needs to:
 
-1. If someone (only 1 person on the team has to do this) already has set up the Vertex AI Infrastructure one simply needs to add a 'service-account-key.json' to the root of this repo.
+1. Add a 'service-account-key.json' to the root of this repo.
 
 2. Login to Weights & Biases (WandB) and add your [API key](https://wandb.ai/settings#api) to the environment variables. (Rename .env.example to .env and add your API key to the file). It is also necessary to change the fields project: <wand_project>  entity: <wandb_entity> in the file `src/conf/wandb.yaml`.
 
-3. Update example-run.sh with your project id, artifact registry name and bucket name.
+3. Update `example-run.sh` with your project id, artifact registry name and bucket name.
 
 4. Install dependencies:
 
