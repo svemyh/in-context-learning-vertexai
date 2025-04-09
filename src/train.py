@@ -1,6 +1,8 @@
 import os
 from random import randint
 import uuid
+import datetime
+from pathlib import Path
 
 from quinine import QuinineArgumentParser
 from tqdm import tqdm
@@ -15,6 +17,9 @@ from schema import schema
 from models import build_model
 
 import wandb
+
+# Add Google Cloud Storage imports
+from google.cloud import storage
 
 torch.backends.cudnn.benchmark = True
 
@@ -33,6 +38,20 @@ def sample_seeds(total_seeds, count):
     while len(seeds) < count:
         seeds.add(randint(0, total_seeds - 1))
     return seeds
+
+
+def upload_to_gcs(local_path, bucket_name, gcs_path):
+    """Upload a file to Google Cloud Storage bucket."""
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        blob = bucket.blob(gcs_path)
+        blob.upload_from_filename(local_path)
+        print(f"Uploaded {local_path} to gs://{bucket_name}/{gcs_path}")
+        return f"gs://{bucket_name}/{gcs_path}"
+    except Exception as e:
+        print(f"Error uploading to GCS: {e}")
+        return None
 
 
 def train(model, args):
@@ -62,6 +81,9 @@ def train(model, args):
     pbar = tqdm(range(starting_step, args.training.train_steps))
 
     num_training_examples = args.training.num_training_examples
+    
+    # Dictionary to store metrics for later uploading
+    metrics_log = {'loss': [], 'excess_loss': [], 'steps': []}
 
     for i in pbar:
         data_sampler_args = {}
@@ -99,6 +121,12 @@ def train(model, args):
             )
             / curriculum.n_points
         )
+        
+        # Store metrics for GCS upload
+        if not args.test_run:
+            metrics_log['loss'].append(loss)
+            metrics_log['excess_loss'].append(loss / baseline_loss)
+            metrics_log['steps'].append(i)
 
         if i % args.wandb.log_every_steps == 0 and not args.test_run:
             wandb.log(
@@ -131,7 +159,31 @@ def train(model, args):
             and not args.test_run
             and i > 0
         ):
-            torch.save(model.state_dict(), os.path.join(args.out_dir, f"model_{i}.pt"))
+            model_checkpoint_path = os.path.join(args.out_dir, f"model_{i}.pt")
+            torch.save(model.state_dict(), model_checkpoint_path)
+    
+    # Save final metrics to a file
+    if not args.test_run:
+        import json
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        
+        # Save metrics as JSON
+        metrics_path = os.path.join(args.out_dir, "metrics.json")
+        with open(metrics_path, 'w') as f:
+            json.dump(metrics_log, f)
+        
+        # Create a loss curve plot
+        plt.figure(figsize=(10, 6))
+        plt.plot(metrics_log['steps'], metrics_log['loss'], label='Training Loss')
+        plt.xlabel('Training Steps')
+        plt.ylabel('Loss')
+        plt.title('Training Loss Curve')
+        plt.legend()
+        plt.grid(True)
+        loss_curve_path = os.path.join(args.out_dir, "loss_curve.png")
+        plt.savefig(loss_curve_path)
+        plt.close()
 
 
 def main(args):
@@ -158,7 +210,33 @@ def main(args):
     train(model, args)
 
     if not args.test_run:
-        _ = get_run_metrics(args.out_dir)  # precompute metrics for eval
+        metrics = get_run_metrics(args.out_dir)  # precompute metrics for eval
+        
+        # Get the GCS bucket name from environment variable
+        gcs_bucket = os.environ.get('GCS_BUCKET')
+        
+        # If GCS bucket is specified, upload results
+        if gcs_bucket:
+            print(f"Uploading training results to GCS bucket: {gcs_bucket}")
+            
+            # Create a timestamp-based folder name
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            model_name = args.wandb.name or f"model_{timestamp}"
+            gcs_folder = f"training_runs/{model_name}_{timestamp}"
+            
+            # Upload model files
+            for root, dirs, files in os.walk(args.out_dir):
+                for file in files:
+                    local_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(local_path, start=args.out_dir)
+                    gcs_path = f"{gcs_folder}/{rel_path}"
+                    upload_to_gcs(local_path, gcs_bucket, gcs_path)
+            
+            print(f"Uploaded training results to gs://{gcs_bucket}/{gcs_folder}/")
+            
+            # Save the GCS path for reference
+            with open(os.path.join(args.out_dir, "gcs_path.txt"), "w") as f:
+                f.write(f"gs://{gcs_bucket}/{gcs_folder}/")
 
 
 if __name__ == "__main__":
