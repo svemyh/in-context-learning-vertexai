@@ -2,6 +2,14 @@ Forked from the original repo https://github.com/dtsip/in-context-learning
 
 This repository contains a setup for running training on Google Cloud Vertex AI with GPU acceleration. None of the original code has been modified. (Except for: train.py where model weights and training results are stored into a Google Cloud Storage bucket.)
 
+### Overall explanation of what makes this repo different from the original
+
+Original codebase is kept in the `src` directory, and as close to the original as possible.
+
+When training on Google Cloud's Vertex AI, the training python script needs to be containerized using Docker, stored in a Google Artifact Registry, and then ran on Vertex AI. Training results and model weights are stored in a Google Cloud Storage bucket. Logs are displayed through Weights & Biases (WandB).
+
+The included `example-run.sh` script handles the entire deployment process with a single command.
+
 # In-Context Learning
 
 This repository contains the code and models for the paper:
@@ -25,11 +33,12 @@ Paper: http://arxiv.org/abs/2208.01066 <br><br>
 
 ### Prerequisites
 
+The following setup guide is assuming the user is running linux, your system may differ slightly. If on windows, WSL (Windows Subsystem for Linux) is a good option.
+
 - Docker
 - Google Cloud account
 - Weights & Biases (WandB) account
 
-Also this repo is inteded setup on linux, your system may differ slightly.
 
 ### Vertex AI training run
 If someone (only 1 person on the team has to do this) already has set up the Vertex AI Infrastructure one simply needs to:
@@ -109,7 +118,6 @@ entrypoint.sh - This bash script is run inside the container when the runtime en
 vertex_job.py - Helper for starting training jobs on Vertex AI
 
 Customize the training run by modifying parameters in `example-run.sh` or providing Weights & Biases integration for experiment tracking.
-
 
 
 ### Maintainer(s) of GCP Vertex AI setup
