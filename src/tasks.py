@@ -1,7 +1,6 @@
 import math
-
 import torch
-
+from torch.fft import fft
 
 def squared_error(ys_pred, ys):
     return (ys - ys_pred).square()
@@ -60,6 +59,7 @@ def get_task_sampler(
         "quadratic_regression": QuadraticRegression,
         "relu_2nn_regression": Relu2nnRegression,
         "decision_tree": DecisionTree,
+        "fourier_transform": FourierTransform,
     }
     if task_name in task_names_to_classes:
         task_cls = task_names_to_classes[task_name]
@@ -71,6 +71,32 @@ def get_task_sampler(
     else:
         print("Unknown task")
         raise NotImplementedError
+    
+class FourierTransform(Task):
+    """
+    xs_b: [batch, seq_len, 1] real time series
+    returns: [batch, seq_len] real magnitudes of the DFT along axis=1
+    """
+    def __init__(self, n_dims, batch_size, pool_dict=None, seeds=None):
+        super().__init__(n_dims, batch_size, pool_dict, seeds)
+        assert n_dims == 1, "FourierTransform only supports n_dims=1"
+
+    def evaluate(self, xs_b):
+        # remove last dimension
+        xs = xs_b.squeeze(-1)          # [B, L]
+        # compute complex DFT along time axis
+        Xf = fft(xs, dim=1)            # [B, L], dtype=torch.complex
+        # convert to real magnitude
+        return torch.abs(Xf)           # [B, L]
+
+    @staticmethod
+    def get_metric():
+        # we’ll use MSE between predicted and true magnitudes
+        return mean_squared_error
+
+    @staticmethod
+    def get_training_metric():
+        return mean_squared_error
 
 
 class LinearRegression(Task):

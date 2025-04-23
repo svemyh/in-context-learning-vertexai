@@ -8,13 +8,13 @@ if [ -f .env ]; then
 fi
 
 # Configuration
-PROJECT_ID="<gcp_project_id>"
+PROJECT_ID="norse-figure-456022-c6"
 LOCATION="us-central1"
-REPOSITORY="<gcp_artifact_registry_name>"
-BUCKET_NAME="<gcp_bucket_name>"
+REPOSITORY="eecs282"
+BUCKET_NAME="eecs282-project"
 IMAGE_NAME="in-context-learning"
 TAG="latest"
-CONFIG_FILE="src/conf/toy.yaml"
+CONFIG_FILE="src/conf/freq.yaml"
 
 # Compute configuration
 MACHINE_TYPE="n1-standard-4"
