@@ -9,7 +9,8 @@ tqdm==4.64.0
 transformers==4.17.0
 wandb==0.12.11
 xgboost==1.6.1
-protobuf==3.20.1
+# protobuf==3.20.1
+protobuf==3.19.6
 torch==1.11.0
 google-cloud-storage==2.7.0
 google-cloud-aiplatform==1.25.0

@@ -14,3 +14,7 @@ infra/terraform.tfstate.backup
 infra/terraform.lock.hcl
 infra/.terraform
 infra/.terraform.lock.hcl
+gcp-run.sh
+selfkey.json
+src/conf/wandb.yaml
+sven-run.sh
