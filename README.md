@@ -121,7 +121,7 @@ Customize the training run by modifying parameters in `example-run.sh` or provid
 
 
 ### Maintainer(s) of GCP Vertex AI setup
-* [Sveinung Myhre](https://github.com/svemyh) | <s.myhre@berkeley.edu>
+* xxx
 
 ## Original Maintainers
 * [Shivam Garg](https://cs.stanford.edu/~shivamg/)
