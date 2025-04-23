@@ -2,7 +2,7 @@
 set -e
 
 # Default configuration file
-CONFIG_FILE=${CONFIG_FILE:-src/conf/toy.yaml}
+CONFIG_FILE=${CONFIG_FILE:-src/conf/freq.yaml}
 
 # Set up cloud storage integration if environment variables are provided
 if [ ! -z "$GCS_BUCKET" ]; then

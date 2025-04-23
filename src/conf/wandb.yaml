@@ -1,5 +1,5 @@
 wandb:
-    project: frequency
+    project: frequency-please-run
     entity: smyhre
     notes:
     log_every_steps: 100

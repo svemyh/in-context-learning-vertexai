@@ -31,7 +31,7 @@ def create_custom_training_job(
     project_id,
     location,
     container_uri,
-    config_file="src/conf/toy.yaml",
+    config_file="src/conf/freq.yaml",
     bucket_name="eecs282-project",
     machine_type="n1-standard-8",
     accelerator_type=None,
@@ -144,7 +144,7 @@ def main():
     parser.add_argument("--project-id", required=True, help="Your Google Cloud project ID")
     parser.add_argument("--location", default="us-central1", help="Location for the job")
     parser.add_argument("--container-uri", required=True, help="URI of the Docker container in Artifact Registry")
-    parser.add_argument("--config-file", default="src/conf/toy.yaml", help="Path to the config YAML file to use")
+    parser.add_argument("--config-file", default="src/conf/freq.yaml", help="Path to the config YAML file to use")
     parser.add_argument("--bucket-name", default="eecs282-project", help="GCS bucket to store results")
     parser.add_argument("--machine-type", default="n1-standard-8", help="Vertex AI machine type")
     parser.add_argument("--accelerator-type", help="GPU accelerator type")

@@ -200,7 +200,7 @@ def main(args):
             config=args.__dict__,
             notes=args.wandb.notes,
             name=args.wandb.name,
-            resume=True,
+            resume=False,
         )
 
     model = build_model(args.model)
@@ -222,7 +222,7 @@ def main(args):
             # Create a timestamp-based folder name
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             model_name = args.wandb.name or f"model_{timestamp}"
-            gcs_folder = f"training_runs/{model_name}_{timestamp}"
+            gcs_folder = f"training_runsfft/{model_name}_{timestamp}"
             
             # Upload model files
             for root, dirs, files in os.walk(args.out_dir):
