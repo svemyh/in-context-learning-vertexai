@@ -14,7 +14,7 @@ REPOSITORY="eecs282"
 BUCKET_NAME="eecs282-project"
 IMAGE_NAME="in-context-learning"
 TAG="latest"
-CONFIG_FILE="src/conf/freq.yaml"
+CONFIG_FILE="src/conf/toy.yaml"
 
 # Compute configuration
 MACHINE_TYPE="n1-standard-4"
