@@ -200,7 +200,7 @@ def main(args):
             config=args.__dict__,
             notes=args.wandb.notes,
             name=args.wandb.name,
-            resume=False,
+            resume=True,
         )
 
     model = build_model(args.model)
