@@ -208,7 +208,7 @@ def eval_model(
         metrics = eval_batch(model, task_sampler, xs, xs_p)
         all_metrics.append(metrics)
 
-        print(f"[DEBUG] metrics shape after eval_batch: {metrics.shape}")
+        # print(f"[DEBUG] metrics shape after eval_batch: {metrics.shape}")
 
 
     metrics = torch.cat(all_metrics, dim=0)
@@ -303,7 +303,7 @@ def compute_evals(all_models, evaluation_kwargs, save_path=None, recompute=False
         for model in all_models:
             if model.name in metrics and not recompute:
                 continue
-
+            print(f"Training {model.name}:")
             metrics[model.name] = eval_model(model, **kwargs)
         all_metrics[eval_name] = metrics
 

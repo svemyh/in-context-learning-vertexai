@@ -105,6 +105,9 @@ def train(model, args):
         )
         task = task_sampler(**task_sampler_args)
         ys = task.evaluate(xs)
+     
+        print(f"[TRAIN DEBUG] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
+
 
         loss_func = task.get_training_metric()
 

@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# 加载 .env 文件中的环境变量（如 WANDB_API_KEY）
 if [ -f .env ]; then
   echo "Loading environment variables from .env"
   source .env
@@ -23,7 +22,7 @@ else
 fi
 
 echo "Starting training..."
-# python src/train.py --config "$CONFIG_FILE"
-WANDB_MODE=disabled python src/train.py --config src/conf/toy.yaml
+python src/train.py --config "$CONFIG_FILE"
+# WANDB_MODE=disabled python src/train.py --config src/conf/toy.yaml
 
 echo "Training complete."

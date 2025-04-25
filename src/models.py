@@ -72,21 +72,14 @@ def get_relevant_baselines(task_name):
             (AveragingModel, {}),
         ],
         "fourier_transform": [
-            (
-                GDModel,  # 梯度下降训练的 wrapper
-                {
-                    "model_class": NeuralNetwork,
-                    "model_class_args": {
-                        "in_size": 128,
-                        "hidden_size": 256,
-                        "out_size": 128,
-                    },
-                    "opt_alg": "adam",
-                    "batch_size": 64,
-                    "lr": 1e-3,
-                    "num_steps": 500,
-                },
-            )
+            (LeastSquaresModel, {}),
+            (DecisionTreeModel, {"max_depth": 4}),
+            (XGBoostModel, {}),
+            (MLPBaselineModel, {
+                "in_dim": 128,
+                "hidden_dim": 256,
+                "out_dim": 1
+            })
         ]
     }
 
@@ -131,14 +124,19 @@ class TransformerModel(nn.Module):
         return zs
 
     def forward(self, xs, ys, inds=None):
+        # print(f"[DEBUG] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
         if inds is None:
             inds = torch.arange(ys.shape[1])
         else:
             inds = torch.tensor(inds)
             if max(inds) >= ys.shape[1] or min(inds) < 0:
                 raise ValueError("inds contain indices where xs and ys are not defined")
+        # print(f"[MODEL DEBUG] input xs.shape = {xs.shape}, ys.shape = {ys.shape}")
         zs = self._combine(xs, ys)
+        # print(f"[MODEL DEBUG] after _combine: zs.shape = {zs.shape}")
         embeds = self._read_in(zs)
+        # print(f"[MODEL DEBUG] after _read_in: embeds.shape = {embeds.shape}")
+
         output = self._backbone(inputs_embeds=embeds).last_hidden_state
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs
@@ -339,7 +337,12 @@ class GDModel:
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
+
+
         xs, ys = xs.cuda(), ys.cuda()
+
+        # print(f"[DEBUG: {self.name}] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
+
 
         if inds is None:
             inds = range(ys.shape[1])
@@ -351,6 +354,7 @@ class GDModel:
 
         # i: loop over num_points
         for i in tqdm(inds):
+
             pred = torch.zeros_like(ys[:, 0])
             model = ParallelNetworks(
                 ys.shape[0], self.model_class, **self.model_class_args
@@ -382,7 +386,8 @@ class GDModel:
                     perm = torch.randperm(i)
                     mask[perm[: self.batch_size]] = True
                     train_xs_cur, train_ys_cur = train_xs[:, mask, :], train_ys[:, mask]
-
+                    if train_xs_cur.shape[1] < 2:
+                        continue  # or skip this iteration safely
                     if verbose and j % print_step == 0:
                         model.eval()
                         with torch.no_grad():
@@ -492,3 +497,42 @@ class XGBoostModel:
             preds.append(pred)
 
         return torch.stack(preds, dim=1)
+
+
+class MLPBaselineModel:
+    def __init__(self, in_dim, hidden_dim, out_dim):
+        self.model = nn.Sequential(
+            nn.Linear(in_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, out_dim)
+        )
+        self.name = f"mlp_in={in_dim}_hid={hidden_dim}_out={out_dim}"
+
+        # Trainable model
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+        self.loss_fn = nn.MSELoss()
+
+    def __call__(self, xs, ys, inds=None):
+        # xs: [B, L, D], ys: [B, L]
+        xs, ys = xs.cuda(), ys.cuda()
+        self.model.cuda()
+        self.model.train()
+
+        # Flatten across time for simplicity
+        B, L, D = xs.shape
+        input_flat = xs.view(B * L, D)
+        target_flat = ys.view(B * L, 1)
+
+        for _ in range(100):  # epochs
+            pred = self.model(input_flat)
+            loss = self.loss_fn(pred, target_flat)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+        # Evaluate on the same inputs (or you can do future xs if desired)
+        self.model.eval()
+        with torch.no_grad():
+            pred = self.model(input_flat).view(B, L)
+
+        return pred
