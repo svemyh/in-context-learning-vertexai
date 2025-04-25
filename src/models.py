@@ -71,6 +71,23 @@ def get_relevant_baselines(task_name):
             (XGBoostModel, {}),
             (AveragingModel, {}),
         ],
+        "fourier_transform": [
+            (
+                GDModel,  # 梯度下降训练的 wrapper
+                {
+                    "model_class": NeuralNetwork,
+                    "model_class_args": {
+                        "in_size": 128,
+                        "hidden_size": 256,
+                        "out_size": 128,
+                    },
+                    "opt_alg": "adam",
+                    "batch_size": 64,
+                    "lr": 1e-3,
+                    "num_steps": 500,
+                },
+            )
+        ]
     }
 
     models = [model_cls(**kwargs) for model_cls, kwargs in task_to_baselines[task_name]]

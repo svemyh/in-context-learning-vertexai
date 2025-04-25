@@ -16,7 +16,7 @@ training:
   batch_size: 64
   learning_rate: 0.0001         # explicit YAML float (0.0001 instead of 1e-4)
   task_kwargs: {}               # must be present (even if empty) to satisfy “null not allowed”
-  train_steps:   5000
+  train_steps:   5
   save_every_steps: 1000
   keep_every_steps: 100000
   curriculum:
@@ -34,4 +34,4 @@ training:
 out_dir: ../models/fourier_transform
 
 wandb:
-  name: time_freq_transformer
+  name: time_freq_debug1

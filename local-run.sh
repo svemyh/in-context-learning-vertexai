@@ -23,6 +23,7 @@ else
 fi
 
 echo "Starting training..."
-python src/train.py --config "$CONFIG_FILE"
+# python src/train.py --config "$CONFIG_FILE"
+WANDB_MODE=disabled python src/train.py --config src/conf/toy.yaml
 
 echo "Training complete."
