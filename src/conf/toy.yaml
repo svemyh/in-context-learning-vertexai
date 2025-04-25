@@ -34,4 +34,4 @@ training:
 out_dir: ../models/fourier_transform
 
 wandb:
-  name: time_freq_debug1
+  name: time_freq_transformer_with_baseline
