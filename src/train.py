@@ -234,7 +234,7 @@ def main(args):
             # Create a timestamp-based folder name
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             model_name = args.wandb.name or f"model_{timestamp}"
-            gcs_folder = f"training_runsfft/{model_name}_{timestamp}"
+            gcs_folder = f"training_ft_transformer/{model_name}_{timestamp}"
             
             # Upload model files
             for root, dirs, files in os.walk(args.out_dir):

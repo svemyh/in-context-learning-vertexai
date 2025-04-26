@@ -75,11 +75,11 @@ def get_relevant_baselines(task_name):
             (LeastSquaresModel, {}),
             (DecisionTreeModel, {"max_depth": 4}),
             (XGBoostModel, {}),
-            (MLPBaselineModel, {
-                "in_dim": 128,
-                "hidden_dim": 256,
-                "out_dim": 1
-            })
+            # (MLPBaselineModel, {
+            #     "in_dim": 128,
+            #     "hidden_dim": 256,
+            #     "out_dim": 1
+            # })
         ]
     }
 
