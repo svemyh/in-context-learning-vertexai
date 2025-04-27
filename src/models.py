@@ -74,12 +74,8 @@ def get_relevant_baselines(task_name):
         "fourier_transform": [
             (LeastSquaresModel, {}),
             (DecisionTreeModel, {"max_depth": 4}),
-            (XGBoostModel, {}),
-            # (MLPBaselineModel, {
-            #     "in_dim": 128,
-            #     "hidden_dim": 256,
-            #     "out_dim": 1
-            # })
+            # (XGBoostModel, {}),
+            (MLPBaselineModel, {})
         ]
     }
 
@@ -499,40 +495,28 @@ class XGBoostModel:
         return torch.stack(preds, dim=1)
 
 
-class MLPBaselineModel:
-    def __init__(self, in_dim, hidden_dim, out_dim):
+class MLPBaselineModel(nn.Module):
+    def __init__(self, seq_len=128, hidden_dim=256):
+        super().__init__()
         self.model = nn.Sequential(
-            nn.Linear(in_dim, hidden_dim),
+            nn.Linear(seq_len, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, out_dim)
+            nn.Linear(hidden_dim, seq_len)
         )
-        self.name = f"mlp_in={in_dim}_hid={hidden_dim}_out={out_dim}"
+        self.name = f"mlp_seq={seq_len}_hid={hidden_dim}"
 
-        # Trainable model
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.loss_fn = nn.MSELoss()
+    def forward(self, xs, ys=None, inds=None):
+        device = next(self.model.parameters()).device
+        xs = xs.to(device)
 
-    def __call__(self, xs, ys, inds=None):
-        # xs: [B, L, D], ys: [B, L]
-        xs, ys = xs.cuda(), ys.cuda()
-        self.model.cuda()
-        self.model.train()
-
-        # Flatten across time for simplicity
         B, L, D = xs.shape
-        input_flat = xs.view(B * L, D)
-        target_flat = ys.view(B * L, 1)
+        assert D == 1, f"Expected feature_dim=1, got {D}"
 
-        for _ in range(100):  # epochs
-            pred = self.model(input_flat)
-            loss = self.loss_fn(pred, target_flat)
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        xs = xs.squeeze(-1)  # now shape [B, L]
+        assert xs.shape[1] == L, f"Unexpected seq_len after squeeze, got {xs.shape}"
 
-        # Evaluate on the same inputs (or you can do future xs if desired)
-        self.model.eval()
-        with torch.no_grad():
-            pred = self.model(input_flat).view(B, L)
+        pred = self.model(xs)  # [B, L] → [B, L]
 
         return pred
+
+
