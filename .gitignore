@@ -8,6 +8,7 @@ service-account-key.json
 .env.*
 !.env.example
 
+/logs
 
 infra/terraform.tfstate
 infra/terraform.tfstate.backup

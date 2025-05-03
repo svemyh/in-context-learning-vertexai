@@ -520,3 +520,24 @@ class MLPBaselineModel(nn.Module):
         return pred
 
 
+class RNNBaseline(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super(RNNBaseline, self).__init__()
+        self.rnn = nn.RNN(input_dim, hidden_dim, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        out, _ = self.rnn(x)
+        out = self.fc(out)
+        return out[:, -1, :]  
+
+class LSTMBaseline(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super(LSTMBaseline, self).__init__()
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.fc(out)
+        return out[:, -1, :]  
