@@ -27,7 +27,7 @@ means = [models_metrics[m]["mean"][0] for m in model_names]
 
 lows  = [models_metrics[m]["bootstrap_low"][0]  for m in model_names]
 highs = [models_metrics[m]["bootstrap_high"][0] for m in model_names]
-model_names = ['Transformer', 'RNN', 'LSTM']
+# model_names = ['Transformer', 'RNN', 'LSTM']
 
 
 plt.figure(figsize=(8,5))
