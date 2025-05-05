@@ -41,5 +41,6 @@ COPY . /app/
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
+RUN chmod +x /app/entrypoint.sh
 # entrypoint.sh is the file that will be executed when the container is run
 ENTRYPOINT ["/bin/bash", "/app/entrypoint.sh"]

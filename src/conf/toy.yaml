@@ -1,33 +1,37 @@
-inherit: 
-    - models/standard.yaml
-    - wandb.yaml
+inherit:
+  - models/standard.yaml
+  - wandb.yaml
 
 model:
-    n_dims: 5
-    n_positions: 11
+  family: gpt2
+  n_dims:      1
+  n_positions: 128
+  n_embd:      256
+  n_layer:     12
+  n_head:      8
 
 training:
-    task: linear_regression
-    data: gaussian
-    task_kwargs: {}
-    batch_size: 64
-    learning_rate: 0.0001
-    save_every_steps: 1000
-    keep_every_steps: 100000
-    train_steps: 5001
-    curriculum:
-        dims:
-            start: 5
-            end: 5
-            inc: 1
-            interval: 2000
-        points:
-            start: 11
-            end: 11
-            inc: 2
-            interval: 2000
+  task: fourier_transform       # make sure your schema’s “allowed” list includes this
+  data: timefreq                # likewise, include “timefreq” in the schema’s allowed data values
+  batch_size: 64
+  learning_rate: 0.0001         # explicit YAML float (0.0001 instead of 1e-4)
+  task_kwargs: {}               # must be present (even if empty) to satisfy “null not allowed”
+  train_steps:   5000
+  save_every_steps: 1000
+  keep_every_steps: 100000
+  curriculum:
+    dims:
+      start: 1
+      end:   1
+      inc:   1
+      interval: 100
+    points:
+      start: 128
+      end:   128
+      inc:   0
+      interval: 1
 
-out_dir: ../models/linear_regression
+out_dir: ../models/fourier_transform
 
 wandb:
-    name: "linear_regression_toy"
+  name: time_freq_transformer_5000

@@ -71,6 +71,12 @@ def get_relevant_baselines(task_name):
             (XGBoostModel, {}),
             (AveragingModel, {}),
         ],
+        "fourier_transform": [
+            (LeastSquaresModel, {}),
+            (DecisionTreeModel, {"max_depth": 4}),
+            # (XGBoostModel, {}),
+            (MLPBaselineModel, {})
+        ]
     }
 
     models = [model_cls(**kwargs) for model_cls, kwargs in task_to_baselines[task_name]]
@@ -114,14 +120,19 @@ class TransformerModel(nn.Module):
         return zs
 
     def forward(self, xs, ys, inds=None):
+        # print(f"[DEBUG] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
         if inds is None:
             inds = torch.arange(ys.shape[1])
         else:
             inds = torch.tensor(inds)
             if max(inds) >= ys.shape[1] or min(inds) < 0:
                 raise ValueError("inds contain indices where xs and ys are not defined")
+        # print(f"[MODEL DEBUG] input xs.shape = {xs.shape}, ys.shape = {ys.shape}")
         zs = self._combine(xs, ys)
+        # print(f"[MODEL DEBUG] after _combine: zs.shape = {zs.shape}")
         embeds = self._read_in(zs)
+        # print(f"[MODEL DEBUG] after _read_in: embeds.shape = {embeds.shape}")
+
         output = self._backbone(inputs_embeds=embeds).last_hidden_state
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs
@@ -322,7 +333,12 @@ class GDModel:
         # prediction made at all indices by default.
         # xs: bsize X npoints X ndim.
         # ys: bsize X npoints.
+
+
         xs, ys = xs.cuda(), ys.cuda()
+
+        # print(f"[DEBUG: {self.name}] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
+
 
         if inds is None:
             inds = range(ys.shape[1])
@@ -334,6 +350,7 @@ class GDModel:
 
         # i: loop over num_points
         for i in tqdm(inds):
+
             pred = torch.zeros_like(ys[:, 0])
             model = ParallelNetworks(
                 ys.shape[0], self.model_class, **self.model_class_args
@@ -365,7 +382,8 @@ class GDModel:
                     perm = torch.randperm(i)
                     mask[perm[: self.batch_size]] = True
                     train_xs_cur, train_ys_cur = train_xs[:, mask, :], train_ys[:, mask]
-
+                    if train_xs_cur.shape[1] < 2:
+                        continue  # or skip this iteration safely
                     if verbose and j % print_step == 0:
                         model.eval()
                         with torch.no_grad():
@@ -475,3 +493,51 @@ class XGBoostModel:
             preds.append(pred)
 
         return torch.stack(preds, dim=1)
+
+
+class MLPBaselineModel(nn.Module):
+    def __init__(self, seq_len=128, hidden_dim=256):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Linear(seq_len, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, seq_len)
+        )
+        self.name = f"mlp_seq={seq_len}_hid={hidden_dim}"
+
+    def forward(self, xs, ys=None, inds=None):
+        device = next(self.model.parameters()).device
+        xs = xs.to(device)
+
+        B, L, D = xs.shape
+        assert D == 1, f"Expected feature_dim=1, got {D}"
+
+        xs = xs.squeeze(-1)  # now shape [B, L]
+        assert xs.shape[1] == L, f"Unexpected seq_len after squeeze, got {xs.shape}"
+
+        pred = self.model(xs)  # [B, L] → [B, L]
+
+        return pred
+
+
+class RNNBaseline(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super(RNNBaseline, self).__init__()
+        self.rnn = nn.RNN(input_dim, hidden_dim, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        out, _ = self.rnn(x)
+        out = self.fc(out)
+        return out[:, -1, :]  
+
+class LSTMBaseline(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super(LSTMBaseline, self).__init__()
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.fc(out)
+        return out[:, -1, :]  

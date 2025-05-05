@@ -38,28 +38,49 @@ def get_model_from_run(run_path, step=-1, only_conf=False):
 # Functions for evaluation
 
 
+# def eval_batch(model, task_sampler, xs, xs_p=None):
+#     task = task_sampler()
+#     if torch.cuda.is_available() and model.name.split("_")[0] in ["gpt2", "lstm"]:
+#         device = "cuda"
+#     else:
+#         device = "cpu"
+
+    # if xs_p is None:
+    #     ys = task.evaluate(xs)
+    #     pred = model(xs.to(device), ys.to(device)).detach()
+    #     metrics = task.get_metric()(pred.cpu(), ys)
+    # else:
+    #     b_size, n_points, _ = xs.shape
+    #     metrics = torch.zeros(b_size, n_points)
+    #     for i in range(n_points):
+    #         xs_comb = torch.cat((xs[:, :i, :], xs_p[:, i:, :]), dim=1)
+    #         ys = task.evaluate(xs_comb)
+
+    #         pred = model(xs_comb.to(device), ys.to(device), inds=[i]).detach()
+    #         metrics[:, i] = task.get_metric()(pred.cpu(), ys)[:, i]
+    # return metrics
+
 def eval_batch(model, task_sampler, xs, xs_p=None):
     task = task_sampler()
-    if torch.cuda.is_available() and model.name.split("_")[0] in ["gpt2", "lstm"]:
-        device = "cuda"
-    else:
-        device = "cpu"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if xs_p is None:
         ys = task.evaluate(xs)
         pred = model(xs.to(device), ys.to(device)).detach()
-        metrics = task.get_metric()(pred.cpu(), ys)
+
+        metrics = (pred.cpu() - ys).square().mean(dim=1)  # shape: [B]
     else:
         b_size, n_points, _ = xs.shape
         metrics = torch.zeros(b_size, n_points)
         for i in range(n_points):
             xs_comb = torch.cat((xs[:, :i, :], xs_p[:, i:, :]), dim=1)
             ys = task.evaluate(xs_comb)
-
             pred = model(xs_comb.to(device), ys.to(device), inds=[i]).detach()
-            metrics[:, i] = task.get_metric()(pred.cpu(), ys)[:, i]
+            metrics[:, i] = (pred.cpu() - ys).square()[:, i]
 
     return metrics
+
+    
 
 
 # Functions for generating different kinds of train/test data
@@ -136,6 +157,9 @@ def aggregate_metrics(metrics, bootstrap_trials=1000):
     Takes as input a tensor of shape (num_eval, n_points) and returns a dict with
     per-point mean, stddev, and bootstrap limits
     """
+    if metrics.dim() == 1:
+        metrics = metrics.unsqueeze(1)
+
     results = {}
     results["mean"] = metrics.mean(dim=0)
     results["std"] = metrics.std(dim=0, unbiased=True)
@@ -183,6 +207,9 @@ def eval_model(
 
         metrics = eval_batch(model, task_sampler, xs, xs_p)
         all_metrics.append(metrics)
+
+        # print(f"[DEBUG] metrics shape after eval_batch: {metrics.shape}")
+
 
     metrics = torch.cat(all_metrics, dim=0)
 
@@ -276,7 +303,7 @@ def compute_evals(all_models, evaluation_kwargs, save_path=None, recompute=False
         for model in all_models:
             if model.name in metrics and not recompute:
                 continue
-
+            print(f"Training {model.name}:")
             metrics[model.name] = eval_model(model, **kwargs)
         all_metrics[eval_name] = metrics
 

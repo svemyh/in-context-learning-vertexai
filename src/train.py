@@ -105,14 +105,20 @@ def train(model, args):
         )
         task = task_sampler(**task_sampler_args)
         ys = task.evaluate(xs)
+     
+        # print(f"[TRAIN DEBUG] xs.shape = {xs.shape}, ys.shape = {ys.shape}")
+
 
         loss_func = task.get_training_metric()
 
         loss, output = train_step(model, xs.cuda(), ys.cuda(), optimizer, loss_func)
 
         point_wise_tags = list(range(curriculum.n_points))
-        point_wise_loss_func = task.get_metric()
-        point_wise_loss = point_wise_loss_func(output, ys.cuda()).mean(dim=0)
+        # point_wise_loss_func = task.get_metric()
+        point_wise_loss_func = lambda y_hat, y: (y_hat - y).square()
+        # point_wise_loss = point_wise_loss_func(output, ys.cuda()).mean(dim=0)
+        point_wise_loss_all = point_wise_loss_func(output, ys.cuda())
+        point_wise_loss = point_wise_loss_all.mean(dim=1)
 
         baseline_loss = (
             sum(
@@ -127,6 +133,12 @@ def train(model, args):
             metrics_log['loss'].append(loss)
             metrics_log['excess_loss'].append(loss / baseline_loss)
             metrics_log['steps'].append(i)
+
+        print("### point_wise_loss shape:", point_wise_loss.shape)
+        point_wise_loss_all = point_wise_loss_func(output, ys.cuda())
+        print(">>> Raw point_wise_loss_all shape:", point_wise_loss_all.shape)
+
+
 
         if i % args.wandb.log_every_steps == 0 and not args.test_run:
             wandb.log(
@@ -222,7 +234,7 @@ def main(args):
             # Create a timestamp-based folder name
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             model_name = args.wandb.name or f"model_{timestamp}"
-            gcs_folder = f"training_runsfft/{model_name}_{timestamp}"
+            gcs_folder = f"training_ft_transformer/{model_name}_{timestamp}"
             
             # Upload model files
             for root, dirs, files in os.walk(args.out_dir):
