@@ -33,17 +33,19 @@ Paper: http://arxiv.org/abs/2208.01066
 }
 ```
 
+
 ## Contributors
 
-https://github.com/svemyh
-
-https://github.com/ljs-233233
-
-https://github.com/TonyHGF
-
-https://github.com/JHJORE
-
-https://github.com/Klovning
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/svemyh"><img src="https://github.com/svemyh.png" width="100px;" alt=""/><br /><sub><b>Sveinung Myhre</b></sub></a></td>
+    <td align="center"><a href="https://github.com/ljs-233233"><img src="https://github.com/ljs-233233.png" width="100px;" alt=""/><br /><sub><b>Jinsheng Li</b></sub></a></td>
+    <td align="center"><a href="https://github.com/TonyHGF"><img src="https://github.com/TonyHGF.png" width="100px;" alt=""/><br /><sub><b>Gangfeng Hu
+</b></sub></a></td>
+    <td align="center"><a href="https://github.com/JHJORE"><img src="https://github.com/JHJORE.png" width="100px;" alt=""/><br /><sub><b>Joergen Jore</b></sub></a></td>
+    <td align="center"><a href="https://github.com/Klovning"><img src="https://github.com/Klovning.png" width="100px;" alt=""/><br /><sub><b>Emil Klovning</b></sub></a></td>
+  </tr>
+</table>
 
 
 ### Maintainers of the [Original Repository](https://github.com/dtsip/in-context-learning)
