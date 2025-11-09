@@ -1,128 +1,51 @@
-Forked from the original repo https://github.com/dtsip/in-context-learning
+# Learning Spectral Structure In-Context: Fourier Function Class Induction via Transformers
 
-This repository contains a setup for running training on Google Cloud Vertex AI with GPU acceleration. None of the original code has been modified. (Except for: train.py where model weights and training results are stored into a Google Cloud Storage bucket.)
+This repository extends the work from [What Can Transformers Learn In-Context? A Case Study of Simple Function Classes](https://github.com/dtsip/in-context-learning) to explore whether Transformers can induce spectral structures through in-context learning.
 
-### Overall explanation of what makes this repo different from the original
-
-Original codebase is kept in the `src` directory, and as close to the original as possible.
-
-When training on Google Cloud's Vertex AI, the training python script needs to be containerized using Docker, stored in a Google Artifact Registry, and then ran on Vertex AI. Training results and model weights are stored in a Google Cloud Storage bucket. Logs are displayed through Weights & Biases (WandB).
-
-The included `example-run.sh` script handles the entire deployment process with a single command.
-
-# In-Context Learning
-
-This repository contains the code and models for the paper:
-
-**What Can Transformers Learn In-Context? A Case Study of Simple Function Classes** <br>
-*Shivam Garg\*, Dimitris Tsipras\*, Percy Liang, Gregory Valiant* <br>
-Paper: http://arxiv.org/abs/2208.01066 <br><br>
+View the full paper [here](https://github.com/svemyh/in-context-learning-vertexai/blob/main/docs/Learning_Spectral_Structure_In-Context.pdf) or download it as a pdf directly [here](https://github.com/svemyh/in-context-learning-vertexai/raw/main/docs/Learning_Spectral_Structure_In-Context.pdf).
 
 ![](docs/setting.jpg)
 
+## Abstract
+
+In-context learning (ICL) allows Transformer models to perform new tasks by conditioning on input-output examples without updating parameters. While prior work has demonstrated that Transformers can emulate learning algorithms for simple function classes, it remains unclear whether they can induce structured transformations between complex domains, such as time and frequency. In this work, we explore the capacity of Transformers to in-context learn the Discrete Fourier Transform (DFT) by presenting paired time- and frequency-domain signal segments as prompts. We propose a synthetic task setup where each prompt consists of sampled signals and their spectral representations, and the model must predict the frequency structure of a new time-domain query. Our architecture builds on recent advances in patch-based tokenization and decoder-only Transformers to support spectrum regression and frequency classification tasks. We evaluate performance using metrics including frequency recovery accuracy, generalization to unseen frequencies, and prompt efficiency. Our results demonstrate that Transformers can recover spectral structure in context, offering a new perspective on learning structured signal transformations without gradient updates.
+
+## Setup
+
+This repository includes infrastructure-as-code using Terraform, Docker containerization for reproducible training environments, and Weights & Biases (WandB) integration for experiment tracking. Training jobs are deployed and executed on Google Cloud Vertex AI with GPU acceleration.
+
+For detailed setup instructions, please see [SETUP.md](SETUP.md).
+
+## Original Work
+
+This work builds upon:
+
+**What Can Transformers Learn In-Context? A Case Study of Simple Function Classes** <br>
+*Shivam Garg\*, Dimitris Tsipras\*, Percy Liang, Gregory Valiant* <br>
+Paper: http://arxiv.org/abs/2208.01066
+
 ```bibtex
-    @InProceedings{garg2022what,
-        title={What Can Transformers Learn In-Context? A Case Study of Simple Function Classes},
-        author={Shivam Garg and Dimitris Tsipras and Percy Liang and Gregory Valiant},
-        year={2022},
-        booktitle={arXiv preprint}
-    }
+@InProceedings{garg2022what,
+    title={What Can Transformers Learn In-Context? A Case Study of Simple Function Classes},
+    author={Shivam Garg and Dimitris Tsipras and Percy Liang and Gregory Valiant},
+    year={2022},
+    booktitle={arXiv preprint}
+}
 ```
 
-## Running training on Google Cloud Vertex AI
+## Contributors
 
-### Prerequisites
+https://github.com/svemyh
 
-The following setup guide is assuming the user is running linux, your system may differ slightly. If on windows, WSL (Windows Subsystem for Linux) is a good option.
+https://github.com/ljs-233233
 
-- Docker
-- Google Cloud account
-- Weights & Biases (WandB) account
+https://github.com/TonyHGF
 
+https://github.com/JHJORE
 
-### Vertex AI training run
-If someone (only 1 person on the team has to do this) already has set up the Vertex AI Infrastructure one simply needs to:
-
-1. Add a 'service-account-key.json' to the root of this repo.
-
-2. Login to Weights & Biases (WandB) and add your [API key](https://wandb.ai/settings#api) to the environment variables. (Rename .env.example to .env and add your API key to the file). It is also necessary to change the fields project: <wand_project>  entity: <wandb_entity> in the file `src/conf/wandb.yaml`.
-
-3. Update `example-run.sh` with your project id, artifact registry name and bucket name.
-
-4. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. Run the training script:
-
-   ```bash
-   ./example-run.sh
-   ```
-
-### Vertex AI Infrastructure Setup
-
-Setting up Vertex AI can be a bit tedious if one is not familiar with the process, but it's really quite straightforward. Tip: set location to `us-central1` consistently for all services to avoid any issues down the line.
-
-0. Claim your $300 at [Google Cloud Console](https://console.cloud.google.com/) and create a new project.
-
-1. Log into the [Google Cloud Console](https://console.cloud.google.com/), activate the necessary APIs:
-- [Google Cloud Storage](https://console.cloud.google.com/storage/overview)
-- [Google Artifact Registry](https://console.cloud.google.com/artifacts)
-- [Google Vertex AI](https://console.cloud.google.com/vertex-ai)
-
-2. Create a [service account](https://console.cloud.google.com/iam-admin/serviceaccounts) and download the key. Rename it to `service-account-key.json` and add it to the root of this repo.
-
-3. Create a bucket in [Google Cloud Storage](https://console.cloud.google.com/storage/overview)
-
-4. Create a artifact registry in [Google Artifact Registry](https://console.cloud.google.com/artifacts)
-
-5. Optionally you can skip steps 3, 4 and instead navigate to '/infra' and run the terraform scripts there. (PS: requires terraform installed) (P.P.S: add project id to main.tf)
-
-```bash
-cd infra
-terraform init
-terraform plan
-terraform apply
-```
-
-6. Now add the created bucket name, and aritfact registry name to the top of `example-run.sh`.
-
-7. Login to Weights & Biases (WandB) and add your [API key](https://wandb.ai/settings#api) to the environment variables. (Rename .env.example to .env and add your API key to the file). It is also necessary to change the fields project: <wand_project>  entity: <wandb_entity> in the file `src/conf/wandb.yaml`.
-
-8. Even though Google is generously providing $300 worth ofcompute they keep their GPU's close to the chest. Navigate to [quotas](https://console.cloud.google.com/iam-admin/quotas), search for T4's (or other) and request a quota increase. The process will fail without a quota increase. Make sure the location matches the one specified previously (e.g. us-central1)
-
-![Quota Screenshot](docs/quota.png)
-
-9. Then if the all of the above has been set up successfully run the training script:
-
-   ```bash
-   ./example-run.sh
-   ```
-
-### Description of key additions:
-
-All the original source code from Garg et al. has been preserved in the `src` directory. Except for: train.py where model weights and training results are stored into a Google Cloud Storage bucket.
+https://github.com/Klovning
 
 
-example-run.sh - this script:
-   - Builds a Docker container with all dependencies
-   - Pushes it to Google Artifact Registry
-   - Launches a Vertex AI training job with the specified configuration
-   - Logs training results to Weights & Biases
-   - Stores weights and training-results in the Google Cloud Storage bucket when the run has completed
-
-entrypoint.sh - This bash script is run inside the container when the runtime environment starts. Among other tasks it executes `python src/train.py --config src/conf/toy.yaml`.
-
-vertex_job.py - Helper for starting training jobs on Vertex AI
-
-Customize the training run by modifying parameters in `example-run.sh` or providing Weights & Biases integration for experiment tracking.
-
-
-### Maintainer(s) of GCP Vertex AI setup
-* xxx
-
-## Original Maintainers
+### Maintainers of the [Original Repository](https://github.com/dtsip/in-context-learning)
 * [Shivam Garg](https://cs.stanford.edu/~shivamg/)
 * [Dimitris Tsipras](https://dtsipras.com/)
