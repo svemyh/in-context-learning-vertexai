@@ -2,7 +2,7 @@
 
 This repository extends the work from [What Can Transformers Learn In-Context? A Case Study of Simple Function Classes](https://github.com/dtsip/in-context-learning) to explore whether Transformers can induce spectral structures through in-context learning.
 
-View the full paper [here](https://github.com/svemyh/in-context-learning-vertexai/blob/main/docs/Learning_Spectral_Structure_In-Context.pdf) or download it as a pdf directly [here](https://github.com/svemyh/in-context-learning-vertexai/raw/main/docs/Learning_Spectral_Structure_In-Context.pdf).
+View the full paper [here](https://github.com/svemyh/in-context-learning-vertexai/blob/main/Learning_Spectral_Structure_In-Context.pdf) or download it as a pdf directly [here](https://github.com/svemyh/in-context-learning-vertexai/raw/main/Learning_Spectral_Structure_In-Context.pdf).
 
 ![](docs/setting.jpg)
 
